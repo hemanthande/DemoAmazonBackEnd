@@ -1,5 +1,6 @@
 import express from "express";
 import { BookRouter } from "./routes/api/book.js";
+import { connect, ping } from "./database.js";
 import * as dotenv from "dotenv";
 import debug from "debug";
 dotenv.config();

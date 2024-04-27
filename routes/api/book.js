@@ -14,7 +14,7 @@ import { MongoClient } from "mongodb";
 
 const router = express.Router();
 
-// Get all books
+// Get all books (Because "list" could also be used as input we want to make sure we catch this before any parameters ":id")
 router.get("/list", async (req, res) => {
   try {
     const db = await connect();
@@ -30,8 +30,16 @@ router.get("/list", async (req, res) => {
 router.post("/add", async (req, res) => {
   try {
     const newBook = req.body;
-    const ackRes = await addBook(newBook);
-    res.status(200).json(ackRes);
+    const dbResult = await addBook(newBook);
+    if (dbResult.acknowledged == true) {
+      //debugBook({message: `Book ${newBook.title} added with an id of ${dbResult.insertedId}`});
+      res.status(200).json({
+        message: `Book ${newBook.title} added with an id of ${dbResult.insertedId}`,
+      });
+    } else {
+      //debugBook({message: `Book ${newBook.title} not added`});
+      res.status(400).json({ message: `Book ${newBook.title} not added` });
+    }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -77,7 +85,12 @@ router.put("/:id", async (req, res) => {
     const id = req.params.id;
     const newBook = req.body;
     const ackRes = await updateBookById(id, newBook);
-    res.status(200).json(ackRes);
+    debugBook(ackRes);
+    if (ackRes.modifiedCount == 1) {
+      res.status(200).json({ message: `Book ${id} updated` });
+    } else {
+      res.status(400).json({ message: `Book ${id} not updated` });
+    }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -111,8 +124,13 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const book = await deleteBookById(id);
-    res.status(200).json(book);
+    const ackRes = await deleteBookById(id);
+    if ((ackRes.deletedCount == 1) & (ackRes.acknowledged == true)) {
+      res.status(200).json({ message: `Book ${id} Deleted succesfully !` });
+      //res.status(200).json(book);
+    } else {
+      res.status(400).json({ message: `Book ${id} was not found !` });
+    }
   } catch (err) {
     res.status(500).json(err);
   }

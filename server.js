@@ -1,5 +1,6 @@
 import express from "express";
 import { BookRouter } from "./routes/api/book.js";
+import { UserRouter } from "./routes/api/user.js";
 import { connect, ping } from "./database.js";
 import * as dotenv from "dotenv";
 import debug from "debug";
@@ -14,6 +15,7 @@ const app = express();
 //allow form data
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/books", BookRouter);
+app.use("/api/user", UserRouter);
 
 // Default route
 app.get("/", (req, res) => {

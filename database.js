@@ -9,8 +9,7 @@ const newId = (str) => ObjectId.createFromHexString(id);
 
 async function connect() {
   if (!_db) {
-    // Replace the placeholder with your Atlas connection string
-    const connectionString =  process.env.DB_URL;
+    const connectionString = process.env.DB_URL;
     const dbName = "DemoAmazon";
     const client = await MongoClient.connect(connectionString);
     _db = client.db(dbName);
@@ -35,12 +34,11 @@ async function getBooks() {
   return books;
 }
 
-
 async function addBook(book) {
   const db = await connect();
   const result = await db.collection("Book").insertOne(book);
   //debugDatabase(result.insertedId);
-  console.table(result);
+  //debugDatabase(result.acknowledged);
   return result;
 }
 
@@ -61,7 +59,7 @@ async function updateBookById(id, updatedBook) {
       { $set: { ...updatedBook } }
     );
   //console.table(result);
-  debugDatabase(result);  
+  //debugDatabase(result);
   return result;
 }
 
@@ -70,10 +68,73 @@ async function deleteBookById(id) {
   const result = await db
     .collection("Book")
     .deleteOne({ _id: ObjectId.createFromHexString(id) });
-    debugDatabase(result);  
+  debugDatabase(result);
   return result;
 }
 
-//ping();
+async function addUser(user) {
+  const db = await connect();
+  user.role = ["customer"]; // Adding a default role for every user.
+  const result = await db.collection("User").insertOne(user);
+  //debugDatabase(result.insertedId);
+  return result;
+}
 
-export { connect, ping, getBooks, getBookById, addBook, updateBookById ,deleteBookById };
+async function loginUser(user) {
+  const db = await connect();
+  //  debugDatabase(user);
+  const resultUser = await db
+    .collection("User")
+    .findOne({ userName: user.userName });
+  //debugDatabase(resultUser);
+  return resultUser;
+}
+
+async function getUsers() {
+  const db = await connect();
+  const users = await db.collection("User").find().toArray();
+  return users;
+}
+
+async function getUserById(id) {
+  const db = await connect();
+  const user = await db.collection("User").findOne({ _id: id });
+  return user;
+}
+
+async function updateUser(user) {
+  const db = await connect();
+  const result = await db
+    .collection("User")
+    .updateOne({ _id: user._id }, { $set: { ...user } });
+  return result;
+}
+
+async function saveEdit(edit) {
+  const db = await connect();
+  const result = await db.collection("Edit").insertOne(edit);
+  return result;
+}
+
+async function findRoleByName(name) {
+  const db = await connect();
+  const role = await db.collection("Role").findOne({ name: name });
+  return role;
+}
+
+ping();
+
+export {
+  connect,
+  ping,
+  getBooks,
+  getBookById,
+  addBook,
+  updateBookById,
+  deleteBookById,
+  getUsers,
+  getUserById,
+  addUser,
+  loginUser,
+};
+//export {findRoleByName,connect, ping, getBooks, getBookById, addBook, updateBook, deleteBook, addUser, loginUser, newId,getAllUsers, getUserById, updateUser, saveEdit}

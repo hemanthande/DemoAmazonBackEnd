@@ -10,9 +10,30 @@ import {
   updateBookById,
   deleteBookById,
 } from "../../database.js";
-import { MongoClient } from "mongodb";
+import { validId } from "../../middleware/validId.js";
+import { validBody } from "../../middleware/validBody.js";
+import Joi from "joi";
 
 const router = express.Router();
+
+const newBookSchema = Joi.object({
+  bookID:Joi.number().integer().min(100).max(9999).required(),
+  title:Joi.string().trim().min(1).required(),
+  author:Joi.string().trim().min(1).required(),
+  genre:Joi.string().valid('Fiction', 'Magical Realism', 'Dystopian', 'Mystery', 'Young Adult', 'Non-Fiction','NSFW').required(),
+  publication_date:Joi.date().greater('01-01-1900').less('now').required(),  
+  page_count:Joi.number().integer().min(2).required(),
+});
+
+const updateBookSchema = Joi.object({
+  bookID:Joi.number().integer().min(100).max(9999),
+  title:Joi.string().trim().min(1),
+  author:Joi.string().trim().min(1),
+  genre:Joi.string().valid('Fiction', 'Magical Realism', 'Dystopian', 'Mystery', 'Young Adult', 'Non-Fiction','NSFW'),
+  publication_date:Joi.date().greater('01-01-1900').less('now'),
+  page_count:Joi.number().integer().min(2),
+});
+
 
 // Get all books (Because "list" could also be used as input we want to make sure we catch this before any parameters ":id")
 router.get("/list", async (req, res) => {
@@ -27,7 +48,7 @@ router.get("/list", async (req, res) => {
 });
 
 //Add new book to the array/ Database
-router.post("/add", async (req, res) => {
+router.post("/add", validBody(newBookSchema), async (req, res) => {
   try {
     const newBook = req.body;
     const dbResult = await addBook(newBook);
@@ -57,12 +78,17 @@ router.post("/add", async (req, res) => {
 });
 
 // Get book by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id", validId("id"), async (req, res) => {
   try {
     const id = req.params.id;
     //debugBook(`In get a book by ID ${id}`);
     const book = await getBookById(id);
-    res.status(200).json(book);
+    if(book){
+      res.status(200).json(book);
+    } else{
+      res.status(400).json({error:` Book with id : ${id} not found !` });
+    }
+    
   } catch (err) {
     res.status(500).json(err);
   }
@@ -80,7 +106,7 @@ router.get("/:id", async (req, res) => {
 
 //Update a book by the ID
 //Update can use put or post
-router.put("/:id", async (req, res) => {
+router.put("/:id", validId("id"), validBody(updateBookSchema), async (req, res) => {
   try {
     const id = req.params.id;
     const newBook = req.body;
@@ -121,7 +147,7 @@ router.put("/:id", async (req, res) => {
 });
 
 //Delete a book by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", validId("id"), async (req, res) => {
   try {
     const id = req.params.id;
     const ackRes = await deleteBookById(id);
@@ -133,28 +159,7 @@ router.delete("/:id", async (req, res) => {
     }
   } catch (err) {
     res.status(500).json(err);
-  }
-  /* This code was for deleting object from an array in local JSON object. we moved to Database storage.
-  const bookID = req.params.id;
-  const book = books.find((book) => book.bookID == bookID);
-  if (book) {
-    const delIndex = books.findIndex((book) => book.bookID == bookID);
-    if (delIndex != 1) {
-      books.splice(delIndex, 1);
-      res.status(200).json({
-        message: `Book ID : ${bookID} with Title : ${book.title} deleted Index ${delIndex}`,
-      });
-    }
-  } else {
-    res
-      .status(200)
-      .json({ message: `Book ID : ${bookID}  Not Found so cannot be deleted` });
-  }
-
-  res.status(200).json({
-    message: `Book ID : ${bookID} Found ID ${book.bookID}   Title : ${book.title} `,
-  });
-  */
+  } 
 });
 
 export { router as BookRouter };

@@ -10,7 +10,7 @@ const newId = (str) => ObjectId.createFromHexString(id);
 async function connect() {
   if (!_db) {
     const connectionString = process.env.DB_URL;
-    const dbName = "DemoAmazon";
+    const dbName = process.env.DB_NAME;
     const client = await MongoClient.connect(connectionString);
     _db = client.db(dbName);
   }
@@ -85,7 +85,7 @@ async function loginUser(user) {
   //  debugDatabase(user);
   const resultUser = await db
     .collection("User")
-    .findOne({ userName: user.userName });
+    .findOne({ email: user.email });
   //debugDatabase(resultUser);
   return resultUser;
 }

@@ -17,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/books", BookRouter);
 app.use("/api/user", UserRouter);
 
+
+app.use(express.static('public'))
+
 // Default route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Hello world from Amazon.com !" });
@@ -34,7 +37,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.stack });
 });
 
-const port = process.env.PORT || 3005;
+const port = process.env.PORT;  //Get the Port from ENV
 
 //Listen on Port 3003
 app.listen(port, () => {

@@ -1,4 +1,7 @@
-import { MongoClient, ObjectId } from "mongodb";
+import {
+  MongoClient,
+  ObjectId
+} from "mongodb";
 import debug from "debug";
 const debugDatabase = debug("app:Database");
 
@@ -9,20 +12,22 @@ const newId = (str) => ObjectId.createFromHexString(id);
 
 async function connect() {
   if (!_db) {
-    const connectionString = process.env.DB_URL;
-    const dbName = process.env.DB_NAME;
-    const client = await MongoClient.connect(connectionString);
-    _db = client.db(dbName);
+      const connectionString = process.env.DB_URL;
+      const dbName = process.env.DB_NAME;
+      const client = await MongoClient.connect(connectionString);
+      _db = client.db(dbName);
   }
   return _db;
 }
 
 async function ping() {
   const db = await connect();
-  await db.command({ ping: 1 });
+  await db.command({
+      ping: 1
+  });
   //console.log("Pinged your deployment. You successfully connected to MongoDB!");
   debugDatabase(
-    `Pinged your deployment. You successfully connected to MongoDB!`
+      `Pinged your deployment. You successfully connected to MongoDB!`
   );
 }
 
@@ -45,19 +50,24 @@ async function addBook(book) {
 async function getBookById(id) {
   const db = await connect();
   const book = await db
-    .collection("Book")
-    .findOne({ _id: ObjectId.createFromHexString(id) });
+      .collection("Book")
+      .findOne({
+          _id: ObjectId.createFromHexString(id)
+      });
   return book;
 }
 
 async function updateBookById(id, updatedBook) {
   const db = await connect();
   const result = await db
-    .collection("Book")
-    .updateOne(
-      { _id: ObjectId.createFromHexString(id) },
-      { $set: { ...updatedBook } }
-    );
+      .collection("Book")
+      .updateOne({
+          _id: ObjectId.createFromHexString(id)
+      }, {
+          $set: {
+              ...updatedBook
+          }
+      });
   //console.table(result);
   //debugDatabase(result);
   return result;
@@ -66,8 +76,10 @@ async function updateBookById(id, updatedBook) {
 async function deleteBookById(id) {
   const db = await connect();
   const result = await db
-    .collection("Book")
-    .deleteOne({ _id: ObjectId.createFromHexString(id) });
+      .collection("Book")
+      .deleteOne({
+          _id: ObjectId.createFromHexString(id)
+      });
   debugDatabase(result);
   return result;
 }
@@ -84,8 +96,10 @@ async function loginUser(user) {
   const db = await connect();
   //  debugDatabase(user);
   const resultUser = await db
-    .collection("User")
-    .findOne({ email: user.email });
+      .collection("User")
+      .findOne({
+          email: user.email
+      });
   //debugDatabase(resultUser);
   return resultUser;
 }
@@ -98,15 +112,23 @@ async function getUsers() {
 
 async function getUserById(id) {
   const db = await connect();
-  const user = await db.collection("User").findOne({ _id: id });
+  const user = await db.collection("User").findOne({
+      _id: id
+  });
   return user;
 }
 
 async function updateUser(user) {
   const db = await connect();
   const result = await db
-    .collection("User")
-    .updateOne({ _id: user._id }, { $set: { ...user } });
+      .collection("User")
+      .updateOne({
+          _id: user._id
+      }, {
+          $set: {
+              ...user
+          }
+      });
   return result;
 }
 
@@ -118,7 +140,9 @@ async function saveEdit(edit) {
 
 async function findRoleByName(name) {
   const db = await connect();
-  const role = await db.collection("Role").findOne({ name: name });
+  const role = await db.collection("Role").findOne({
+      name: name
+  });
   return role;
 }
 

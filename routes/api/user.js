@@ -23,6 +23,7 @@ import {
   mergePermissions,
   hasPermission,
 } from "@merlin4/express-auth";
+import { validId } from '../../middleware/validId.js';
 
 const router = express.Router();
 
@@ -96,6 +97,7 @@ router.post("/add", validBody(newUserSchema), async (req, res) => {
 
     newUser.password = await bcrypt.hash(newUser.password, 10);
     const dbResult = await addUser(newUser);
+    debugUser(dbResult);
     if (dbResult.acknowledged == true) {
       debugUser({
         message: `User ${newUser.userName} added with an id of ${dbResult.insertedId}`,
@@ -110,9 +112,8 @@ router.post("/add", validBody(newUserSchema), async (req, res) => {
         role: newUser.role,
       });
     } else {
-      //debugUser({message: `Book ${newBook.title} not added`});
       res.status(400).json({
-        message: `There was an error creating this User : ${newUser.name} `,
+        message: `There was an error creating this User : ${newUser.name} or $ ${newUser.email} `,
       });
     }
   } catch (err) {
@@ -120,7 +121,7 @@ router.post("/add", validBody(newUserSchema), async (req, res) => {
   }
 });
 
-//Admin login to update
+//Login
 router.post("/login", validBody(loginUserSchema), async (req, res) => {
   const user = req.body;
   try {
@@ -197,13 +198,16 @@ router.put(
 router.put(
   "/update/:id",
   isLoggedIn(),
-  //validId("id"),
+  validId("id"),
   validBody(updateUserSchema),
   async (req, res) => {
     debugUser("Admin Route Updating a user");
+    debugUser(req.body);
+    //const id = req.params.id;
     const updatedUser = req.body;
     const user = await getUserById(req.id);
     //update user with updatedUser
+    debugUser(updatedUser);
     if (user) {
       if (updatedUser.name) {
         user.name = updatedUser.name;

@@ -1,5 +1,6 @@
 import { MongoClient, ObjectId } from "mongodb";
 import debug from "debug";
+import { json } from "express";
 const debugDatabase = debug("app:Database");
 
 let _db = null;
@@ -22,10 +23,7 @@ async function ping() {
   await db.command({
     ping: 1,
   });
-  //console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  debugDatabase(
-    `Pinged your deployment. You successfully connected to MongoDB!`
-  );
+  debugDatabase( `Pinged your deployment. You successfully connected to MongoDB!` );
 }
 
 async function getBooks() {
@@ -81,9 +79,20 @@ async function deleteBookById(id) {
 async function addUser(user) {
   const db = await connect();
   user.role = ["customer"]; // Adding a default role for every user.
-  const result = await db.collection("User").insertOne(user);
-  //debugDatabase(result.insertedId);
-  return result;
+  //Before adding check if the email/username is already taken.
+  //debugDatabase(user);
+  const potientialDup = await db
+    .collection("User")
+    .findOne({ email: user.email });
+  if (potientialDup) {
+    debugDatabase("Duplicate exist cannot insert");
+    return null;
+  } else {
+    debugDatabase("Inserted");
+    const result = await db.collection("User").insertOne(user);
+    debugDatabase(result.insertedId);
+    return result;
+  }
 }
 
 async function loginUser(user) {
@@ -149,6 +158,6 @@ export {
   newId,
   updateUser,
   saveEdit,
-  findRoleByName
+  findRoleByName,
 };
 //export {findRoleByName,connect, ping, getBooks, getBookById, addBook, updateBook, deleteBook, addUser, loginUser, newId,getAllUsers, getUserById, updateUser, saveEdit}

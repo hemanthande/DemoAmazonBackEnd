@@ -81,10 +81,10 @@ async function addUser(user) {
   user.role = ["customer"]; // Adding a default role for every user.
   //Before adding check if the email/username is already taken.
   //debugDatabase(user);
-  const potientialDup = await db
+  const potentialDup = await db
     .collection("User")
     .findOne({ email: user.email });
-  if (potientialDup) {
+  if (potentialDup) {
     debugDatabase("Duplicate exist cannot insert");
     return null;
   } else {

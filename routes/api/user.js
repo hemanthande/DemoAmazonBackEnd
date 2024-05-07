@@ -1,6 +1,6 @@
-import express from "express";
-import debug from "debug";
-const debugUser = debug("app:user");
+import express from 'express';
+import debug from 'debug';
+const debugUser = debug('app:user');
 import {
   addUser,
   connect,
@@ -11,18 +11,18 @@ import {
   updateUser,
   newId,
   findRoleByName,
-} from "../../database.js";
+} from '../../database.js';
 //import { MongoClient } from "mongodb";
-import bcrypt from "bcrypt";
-import { validBody } from "../../middleware/validBody.js";
-import Joi from "joi";
-import jwt from "jsonwebtoken";
+import bcrypt from 'bcrypt';
+import { validBody } from '../../middleware/validBody.js';
+import Joi from 'joi';
+import jwt from 'jsonwebtoken';
 import {
   isLoggedIn,
   fetchRoles,
   mergePermissions,
   hasPermission,
-} from "@merlin4/express-auth";
+} from '@merlin4/express-auth';
 import { validId } from '../../middleware/validId.js';
 
 const router = express.Router();
@@ -30,7 +30,7 @@ const router = express.Router();
 async function issueAuthToken(user) {
   const payload = { _id: user._id, email: user.email, role: user.role };
   const secret = process.env.JWT_SECRET;
-  const options = { expiresIn: "1h" };
+  const options = { expiresIn: '1h' };
 
   const roles = await fetchRoles(user, (role) => findRoleByName(role));
 
@@ -53,7 +53,7 @@ async function issueAuthToken(user) {
 
 function issueAuthCookie(res, authToken) {
   const cookieOptions = { httpOnly: true, maxAge: 1000 * 60 * 60 };
-  res.cookie("authToken", authToken, cookieOptions);
+  res.cookie('authToken', authToken, cookieOptions);
 }
 
 //step 1: define new user schema
@@ -74,11 +74,11 @@ const updateUserSchema = Joi.object({
 });
 
 // Get all users
-router.get("/list", isLoggedIn(), async (req, res) => {
+router.get('/list', isLoggedIn(), async (req, res) => {
   try {
     const db = await connect();
     const users = await getUsers();
-    debugUser("Getting all the Users!");
+    debugUser('Getting all the Users!');
     res.status(200).json(users);
   } catch (err) {
     debugUser(err.error);
@@ -87,7 +87,7 @@ router.get("/list", isLoggedIn(), async (req, res) => {
 });
 
 //Add new User to the Database
-router.post("/add", validBody(newUserSchema), async (req, res) => {
+router.post('/add', validBody(newUserSchema), async (req, res) => {
   try {
     const newUser = {
       //_id: newId(),
@@ -102,7 +102,7 @@ router.post("/add", validBody(newUserSchema), async (req, res) => {
       debugUser({
         message: `User ${newUser.userName} added with an id of ${dbResult.insertedId}`,
       });
-      //creating Cookies and issueing AuthToken
+      //creating Cookies and issuing AuthToken
       const authToken = await issueAuthToken(newUser);
       issueAuthCookie(res, authToken);
 
@@ -122,11 +122,14 @@ router.post("/add", validBody(newUserSchema), async (req, res) => {
 });
 
 //Login
-router.post("/login", validBody(loginUserSchema), async (req, res) => {
+router.post('/login', validBody(loginUserSchema), async (req,res) => {
+  //debugUser(`Inside Begin Login page.`);
+
+
   const user = req.body;
   try {
     const resultUser = await loginUser(user);
-    debugUser(resultUser);
+    //debugUser(resultUser);
     if (
       resultUser &&
       (await bcrypt.compare(user.password, resultUser.password))
@@ -150,9 +153,14 @@ router.post("/login", validBody(loginUserSchema), async (req, res) => {
   }
 });
 
+router.post('/logout', isLoggedIn(), async (req,res) => {
+  res.clearCookie('authToken');
+  res.status(200).json({message:'Logged Out'});
+});
+
 //Self Service Update
 router.put(
-  "/update/me",
+  '/update/me',
   isLoggedIn(),
   validBody(updateUserSchema),
   async (req, res) => {
@@ -173,8 +181,8 @@ router.put(
         if (dbResult.modifiedCount == 1) {
           const edit = {
             timeStamp: new Date(),
-            op: "Self-Edit Update User",
-            collection: "User",
+            op: 'Self-Edit Update User',
+            collection: 'User',
             target: user._id,
             auth: req.auth,
           };
@@ -196,12 +204,12 @@ router.put(
 
 //Admin can update a user by the id
 router.put(
-  "/update/:id",
+  '/update/:id',
   isLoggedIn(),
-  validId("id"),
+  validId('id'),
   validBody(updateUserSchema),
   async (req, res) => {
-    debugUser("Admin Route Updating a user");
+    debugUser('Admin Route Updating a user');
     debugUser(req.body);
     //const id = req.params.id;
     const updatedUser = req.body;
@@ -219,8 +227,8 @@ router.put(
       if (dbResult.modifiedCount == 1) {
         const edit = {
           timeStamp: new Date(),
-          op: "Admin Update User",
-          collection: "User",
+          op: 'Admin Update User',
+          collection: 'User',
           target: user._id,
           auth: req.auth,
         };

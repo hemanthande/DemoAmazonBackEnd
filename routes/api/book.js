@@ -1,6 +1,6 @@
-import express from "express";
-import debug from "debug";
-const debugBook = debug("app:book");
+import express from 'express';
+import debug from 'debug';
+const debugBook = debug('app:book');
 import {
   connect,
   ping,
@@ -9,11 +9,11 @@ import {
   addBook,
   updateBookById,
   deleteBookById,
-} from "../../database.js";
-import { validId } from "../../middleware/validId.js";
-import { validBody } from "../../middleware/validBody.js";
-import Joi from "joi";
-import { isLoggedIn, hasPermission } from "@merlin4/express-auth";
+} from '../../database.js';
+import { validId } from '../../middleware/validId.js';
+import { validBody } from '../../middleware/validBody.js';
+import Joi from 'joi';
+import { isLoggedIn, hasPermission } from '@merlin4/express-auth';
 
 const router = express.Router();
 
@@ -23,16 +23,16 @@ const newBookSchema = Joi.object({
   author: Joi.string().trim().min(1).required(),
   genre: Joi.string()
     .valid(
-      "Fiction",
-      "Magical Realism",
-      "Dystopian",
-      "Mystery",
-      "Young Adult",
-      "Non-Fiction",
-      "NSFW"
+      'Fiction',
+      'Magical Realism',
+      'Dystopian',
+      'Mystery',
+      'Young Adult',
+      'Non-Fiction',
+      'NSFW'
     )
     .required(),
-  publication_date: Joi.date().greater("01-01-1900").less("now").required(),
+  publication_date: Joi.date().greater('01-01-1900').less('now').required(),
   page_count: Joi.number().integer().min(2).required(),
 });
 
@@ -41,122 +41,132 @@ const updateBookSchema = Joi.object({
   title: Joi.string().trim().min(1),
   author: Joi.string().trim().min(1),
   genre: Joi.string().valid(
-    "Fiction",
-    "Magical Realism",
-    "Dystopian",
-    "Mystery",
-    "Young Adult",
-    "Non-Fiction",
-    "NSFW"
+    'Fiction',
+    'Magical Realism',
+    'Dystopian',
+    'Mystery',
+    'Young Adult',
+    'Non-Fiction',
+    'NSFW'
   ),
-  publication_date: Joi.date().greater("01-01-1900").less("now"),
+  publication_date: Joi.date().greater('01-01-1900').less('now'),
   page_count: Joi.number().integer().min(2),
 });
 
 // Get all books (Because "list" could also be used as input we want to make sure we catch this before any parameters ":id")
-router.get("/list", isLoggedIn(), async (req, res) => {
-  //req.body -- Comes from the HTML form typically the name attribitue of the controls
-  //<input type = "text" name="txtEmail"/>
-  //req.body.txtEmail
+router.get(
+  '/list',
+  isLoggedIn(),
+  //hasPermission('canListBooks'),
+  async (req, res) => {
+    //req.body -- Comes from the HTML form typically the name attribitue of the controls
+    //<input type = "text" name="txtEmail"/>
+    //req.body.txtEmail
 
-  //req.params
-  //Variable thats part of the URL
-  //http://localhost:3003/api/books/1232323232
-  //req.params.id
+    //req.params
+    //Variable thats part of the URL
+    //http://localhost:3003/api/books/1232323232
+    //req.params.id
 
-  //req.query
-  //a query string is part of the url that starts with a ?
-  debugBook(`The req.auth property is: ${JSON.stringify(req.auth)}`);
+    //req.query
+    //a query string is part of the url that starts with a ?
 
-  let { keywords, author, title, genre, sortBy, pageSize, pageNumber } =
-    req.query;
-  const match = {}; //match stage of the aggregation pipeline is the filter similar to the where clause in SQL
-  let sort = {
-    author: 1,
-  }; //default sort stage will sort by author ascending
+    //debugBook(`The req.auth property is: ${JSON.stringify(req.auth)}`);
+    //debugBook(`The req.query property is: ${JSON.stringify(req.query)}`);
 
-  try {
-    //debugBook(`Getting all the Books, The Query string is ${JSON.stringify(req.query)}`);
+    let { keywords, author, title, genre, sortBy, pageSize, pageNumber } =
+      req.query;
+    const match = {}; //match stage of the aggregation pipeline is the filter similar to the where clause in SQL
+    let sort = {
+      author: 1,
+    }; //default sort stage will sort by author ascending
 
-    if (keywords) {
-      match.$text = {
-        $search: keywords,
-      };
-    }
+    try {
+      //debugBook(`Getting all the Books, The Query string is ${JSON.stringify(req.query)}`);
 
-    if (author) {
-      //match.author = { $eq: author };
-      //debugBook(`If Author: ${author}`);
-      match.author = {
-        $regex: author,
-      }; //Matches to Like with a partial word search
-    }
-
-    if (title) {
-      //match.title = { $eq: title };
-      //debugBook(`If Author: ${title}`);
-      match.title = {
-        $regex: title,
-      }; //Matches to Like with a partial word search
-    }
-
-    if (genre) {
-      //match.genre = { $eq: genre };
-      match.genre = {
-        $regex: genre,
-      };
-    }
-
-    //debugBook(`The pipeline is ${JSON.stringify(sortBy)}`);
-
-    switch (sortBy) {
-      case "page_count":
-        sort = {
-          page_count: 1,
+      if (keywords) {
+        match.$text = {
+          $search: keywords,
         };
-        break;
-      case "publication_date":
-        sort = {
-          publication_date: 1,
+      }
+
+      if (author) {
+        //match.author = { $eq: author };
+        //debugBook(`If Author: ${author}`);
+        match.author = {
+          $regex: author,
+        }; //Matches to Like with a partial word search
+      }
+
+      if (title) {
+        //match.title = { $eq: title };
+        //debugBook(`If Author: ${title}`);
+        match.title = {
+          $regex: title,
+        }; //Matches to Like with a partial word search
+      }
+
+      if (genre) {
+        //match.genre = { $eq: genre };
+        match.genre = {
+          $regex: genre,
         };
-        break;
+      }
+
+      //debugBook(`The pipeline is ${JSON.stringify(sortBy)}`);
+
+      switch (sortBy) {
+        case 'page_count':
+          sort = {
+            page_count: 1,
+          };
+          break;
+        case 'publication_date':
+          sort = {
+            publication_date: 1,
+          };
+          break;
+      }
+
+      pageNumber = parseInt(pageNumber) || 1;
+      pageSize = parseInt(pageSize) || 100;
+      const skip = (pageNumber - 1) * pageSize;
+      const limit = pageSize;
+
+      const pipeline = [
+        {
+          $match: match,
+        },
+        {
+          $sort: sort,
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ];
+
+      //debugBook(`The pipeline is ${JSON.stringify(pipeline)}`);
+      //debugBook(`Hitting http://localhost:3003/api/books/list @ ${new Date()}`)
+
+      const db = await connect();
+      //debugBook(`The DB is ${db}`);
+      const cursor = await db.collection('Book').aggregate(pipeline);
+      const books = await cursor.toArray();
+
+      res.status(200).json(books);
+      //debugBook(`The Books is ${books}`);
+    } catch {
+      res.status(500).json(err);
     }
-
-    pageNumber = parseInt(pageNumber) || 1;
-    pageSize = parseInt(pageSize) || 100;
-    const skip = (pageNumber - 1) * pageSize;
-    const limit = pageSize;
-
-    const pipeline = [
-      {
-        $match: match,
-      },
-      {
-        $sort: sort,
-      },
-      {
-        $skip: skip,
-      },
-      {
-        $limit: limit,
-      },
-    ];
-
-    //debugBook(`The pipeline is ${JSON.stringify(pipeline)}`);
-
-    const db = await connect();
-    const cursor = await db.collection("Book").aggregate(pipeline);
-    const books = await cursor.toArray();
-
-    res.status(200).json(books);
-  } catch {
-    res.status(500).json(err);
   }
-});
+);
 
 //Add new book to the array/ Database
 router.post(
-  "/add",
+  '/add',
   isLoggedIn(),
   validBody(newBookSchema),
   async (req, res) => {
@@ -181,7 +191,7 @@ router.post(
 );
 
 // Get book by ID
-router.get("/:id", isLoggedIn(), validId("id"), async (req, res) => {
+router.get('/:id', isLoggedIn(), validId('id'), async (req, res) => {
   try {
     const id = req.params.id;
     //debugBook(`In get a book by ID ${id}`);
@@ -201,9 +211,10 @@ router.get("/:id", isLoggedIn(), validId("id"), async (req, res) => {
 //Update a book by the ID
 //Update can use put or post
 router.put(
-  "/:id",
-  validId("id"),
+  '/update/:id',
+  validId('id'),
   isLoggedIn(),
+  hasPermission('canUpdateBook'),
   validBody(updateBookSchema),
   async (req, res) => {
     try {
@@ -227,23 +238,29 @@ router.put(
 );
 
 //Delete a book by ID
-router.delete("/:id", isLoggedIn(), validId("id"), async (req, res) => {
-  try {
-    const id = req.params.id;
-    const ackRes = await deleteBookById(id);
-    if ((ackRes.deletedCount == 1) & (ackRes.acknowledged == true)) {
-      res.status(200).json({
-        message: `Book ${id} Deleted succesfully !`,
-      });
-      //res.status(200).json(book);
-    } else {
-      res.status(400).json({
-        message: `Book ${id} was not found !`,
-      });
+router.delete(
+  '/delete/:id',
+  isLoggedIn(),
+  hasPermission('canDeleteBook'),
+  validId('id'),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+      const ackRes = await deleteBookById(id);
+      if ((ackRes.deletedCount == 1) & (ackRes.acknowledged == true)) {
+        res.status(200).json({
+          message: `Book ${id} Deleted succesfully !`,
+        });
+        //res.status(200).json(book);
+      } else {
+        res.status(400).json({
+          message: `Book ${id} was not found !`,
+        });
+      }
+    } catch (err) {
+      res.status(500).json(err);
     }
-  } catch (err) {
-    res.status(500).json(err);
   }
-});
+);
 
 export { router as BookRouter };

@@ -26,24 +26,20 @@ import {
 import { validId } from '../../middleware/validId.js';
 
 const router = express.Router();
-
-async function issueAuthToken(user) {
-  const payload = { _id: user._id, email: user.email, role: user.role };
+async function issueAuthToken(user){
+  const payload = {_id: user._id, email: user.email, role: user.role};
   const secret = process.env.JWT_SECRET;
-  const options = { expiresIn: '1h' };
+  const options = {expiresIn:'1h'};
 
-  const roles = await fetchRoles(user, (role) => findRoleByName(role));
 
-  roles.forEach((role) => {
-    debugUser(
-      `The users role is ${
-        role.name
-      } and has the following permissions: ${JSON.stringify(role.permissions)}`
-    );
-  });
+  const roles = await fetchRoles(user, role => findRoleByName(role));
 
-  //const permissions = mergePermissions(user, roles);
-  //payload.permissions = permissions;
+   roles.forEach(role => {
+     debugUser(`The users role is ${(role.name)} and has the following permissions: ${JSON.stringify(role.permissions)}`);
+   });
+
+  const permissions = mergePermissions(user, roles);
+  payload.permissions = permissions;
 
   //debugUser(`The users permissions are ${permissions}`);
 
@@ -123,33 +119,22 @@ router.post('/add', validBody(newUserSchema), async (req, res) => {
 
 //Login
 router.post('/login', validBody(loginUserSchema), async (req,res) => {
-  //debugUser(`Inside Begin Login page.`);
-
-
   const user = req.body;
-  try {
-    const resultUser = await loginUser(user);
-    //debugUser(resultUser);
-    if (
-      resultUser &&
-      (await bcrypt.compare(user.password, resultUser.password))
-    ) {
+
+  const resultUser = await loginUser(user);
+  //debugUser(resultUser);
+  if(resultUser && await bcrypt.compare(user.password, resultUser.password)){
       const authToken = await issueAuthToken(resultUser);
       issueAuthCookie(res, authToken);
       res.status(200).json({
-        message: `Welcome ${resultUser.name}`,
-        authToken: authToken,
-        email: resultUser.email,
-        fullName: resultUser.name,
-        role: resultUser.role,
-      });
-    } else {
+          message:`Welcome ${resultUser.name}`,
+          authToken:authToken,
+          email:resultUser.email,
+          name:resultUser.name,
+          role:resultUser.role,
+      } );
+  }else{
       res.status(401).json(`email or password incorrect`);
-      //debugUser(resultUser);
-    }
-  } catch (err) {
-    res.status(500).json(err);
-    debugUser(err);
   }
 });
 

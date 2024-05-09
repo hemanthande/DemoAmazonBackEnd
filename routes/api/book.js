@@ -12,8 +12,13 @@ import {
 } from '../../database.js';
 import { validId } from '../../middleware/validId.js';
 import { validBody } from '../../middleware/validBody.js';
+import {
+  isLoggedIn,
+  fetchRoles,
+  mergePermissions,
+  hasPermission,
+} from '@merlin4/express-auth';
 import Joi from 'joi';
-import { isLoggedIn, hasPermission } from '@merlin4/express-auth';
 
 const router = express.Router();
 
@@ -57,7 +62,7 @@ const updateBookSchema = Joi.object({
 router.get(
   '/list',
   isLoggedIn(),
-  //hasPermission('canListBooks'),
+  hasPermission('canListBook'),
   async (req, res) => {
     //req.body -- Comes from the HTML form typically the name attribitue of the controls
     //<input type = "text" name="txtEmail"/>
@@ -246,6 +251,7 @@ router.delete(
   async (req, res) => {
     try {
       const id = req.params.id;
+      debugBook('Inside Delete boook Start');
       const ackRes = await deleteBookById(id);
       if ((ackRes.deletedCount == 1) & (ackRes.acknowledged == true)) {
         res.status(200).json({

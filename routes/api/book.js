@@ -64,7 +64,7 @@ router.get(
   isLoggedIn(),
   hasPermission('canListBook'),
   async (req, res) => {
-    //req.body -- Comes from the HTML form typically the name attribitue of the controls
+    //req.body -- Comes from the HTML form typically the name attribute of the controls
     //<input type = "text" name="txtEmail"/>
     //req.body.txtEmail
 
@@ -173,6 +173,7 @@ router.get(
 router.post(
   '/add',
   isLoggedIn(),
+  hasPermission('canInsertBook'),
   validBody(newBookSchema),
   async (req, res) => {
     try {
@@ -214,7 +215,6 @@ router.get('/:id', isLoggedIn(), validId('id'), async (req, res) => {
 });
 
 //Update a book by the ID
-//Update can use put or post
 router.put(
   '/update/:id',
   validId('id'),
@@ -222,6 +222,8 @@ router.put(
   hasPermission('canUpdateBook'),
   validBody(updateBookSchema),
   async (req, res) => {
+    debugBook(req.params.id);
+    debugBook(req.body);
     try {
       const id = req.params.id;
       const newBook = req.body;
@@ -251,11 +253,11 @@ router.delete(
   async (req, res) => {
     try {
       const id = req.params.id;
-      debugBook('Inside Delete boook Start');
+      debugBook('Inside Delete book Start');
       const ackRes = await deleteBookById(id);
       if ((ackRes.deletedCount == 1) & (ackRes.acknowledged == true)) {
         res.status(200).json({
-          message: `Book ${id} Deleted succesfully !`,
+          message: `Book ${id} Deleted successfully !`,
         });
         //res.status(200).json(book);
       } else {

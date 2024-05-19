@@ -51,7 +51,7 @@ async function issueAuthToken(user) {
 }
 
 function issueAuthCookie(res, authToken) {
-  const cookieOptions = { httpOnly: true, maxAge: 1000 * 60 * 60 };
+  const cookieOptions = {httpOnly:true,maxAge:1000*60*60, sameSite:'none', secure:true};
   res.cookie('authToken', authToken, cookieOptions);
 }
 

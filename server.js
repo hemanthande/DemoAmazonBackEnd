@@ -24,7 +24,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:5173',
-      'https://retroamazonfrontend.uc.r.appspot.com',
+      'https://hka-demo-amazon-frontend.wn.r.appspot.com',
     ],
     credentials: true,
   })
